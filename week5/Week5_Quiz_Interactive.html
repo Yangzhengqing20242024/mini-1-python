@@ -1,0 +1,195 @@
+<title>Week 5 Pandas Drill</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Bricolage+Grotesque:wght@600;700&display=swap">
+<style>
+/* Layout: sticky score bar, section tabs, one column of question cards; code and output in mono panels */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#17202e; --muted:#5b6778; --line:#d9dfe8;
+  --accent:#0b6e6e; --accent-soft:#dff1ef; --code-bg:#eef1f6; --out-bg:#0f1b2a; --out-fg:#d6e3f3;
+  --good:#16794a; --good-soft:#dcf3e6; --bad:#b4322a; --bad-soft:#fbe4e1;
+  --font-display:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c131d; --surface:#141d2b; --fg:#e6ecf5; --muted:#93a1b5; --line:#263247;
+  --accent:#4fc3bb; --accent-soft:#143936; --code-bg:#0f1825; --out-bg:#070c14; --out-fg:#cfe0f3;
+  --good:#5fd09a; --good-soft:#12342465; --bad:#ff8a80; --bad-soft:#3d1a1865; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c131d; --surface:#141d2b; --fg:#e6ecf5; --muted:#93a1b5; --line:#263247;
+  --accent:#4fc3bb; --accent-soft:#143936; --code-bg:#0f1825; --out-bg:#070c14; --out-fg:#cfe0f3;
+  --good:#5fd09a; --good-soft:#12342465; --bad:#ff8a80; --bad-soft:#3d1a1865; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;padding-inline:16px}
+.wrap{max-width:860px;margin-inline:auto}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+h1{font-family:var(--font-display);font-size:1.35rem;margin:0;text-wrap:balance}
+.score{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:.9rem;color:var(--muted)}
+.score b{color:var(--fg);font-size:1.05rem}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-block:8px 10px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%;transition:width .25s}
+#barGood{background:var(--good)} #barBad{background:var(--bad)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-size:.85rem;padding:6px 11px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme="dark"] .tab[aria-selected="true"]{color:#06201e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tab[aria-selected="true"]{color:#06201e}}
+.tab small{font-family:var(--font-mono);opacity:.8;margin-left:4px}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:flex;flex-direction:column;gap:16px;padding-block:18px 56px}
+.intro{color:var(--muted);font-size:.92rem;margin:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card.right{border-color:var(--good)} .card.wrong{border-color:var(--bad)}
+.qhead{display:flex;justify-content:space-between;gap:8px;font-family:var(--font-mono);font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.q{margin:0;font-weight:500;min-width:0}
+.lbl{font-family:var(--font-mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+pre{margin:0;padding:10px 12px;border-radius:6px;font-family:var(--font-mono);font-size:.82rem;line-height:1.5;overflow-x:auto;white-space:pre}
+pre.code{background:var(--code-bg);border:1px solid var(--line)}
+pre.out{background:var(--out-bg);color:var(--out-fg)}
+pre.out.err{color:#ffb4ab}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.blk{min-width:0}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:500;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-align:left}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme="dark"] .btn.primary{color:#06201e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#06201e}}
+.btn:disabled{cursor:default;opacity:.85}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{width:100%;font-family:var(--font-mono);font-size:.82rem;overflow-wrap:anywhere}
+.opt.good,.btn.good{background:var(--good-soft);border-color:var(--good)}
+.opt.bad,.btn.bad{background:var(--bad-soft);border-color:var(--bad)}
+textarea{width:100%;min-height:76px;font-family:var(--font-mono);font-size:.82rem;background:var(--code-bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.fb{border-radius:6px;padding:10px 12px;font-size:.92rem;min-width:0}
+.fb.good{background:var(--good-soft)} .fb.bad{background:var(--bad-soft)}
+.fb b.v{display:block;margin-bottom:4px}
+.fb pre{margin-top:8px}
+.fb .yours{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);white-space:pre-wrap;margin-top:6px}
+.final{display:none;text-align:center;padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
+.final.show{display:block}
+.reset{font:inherit;font-size:.8rem;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+</style>
+<div class="wrap">
+<header class="top">
+ <div class="hrow"><h1>Week 5 Pandas Drill</h1>
+  <div class="score"><b id="sc">0</b> correct / <span id="an">0</span> answered / <span id="tot">0</span> <button class="reset" id="reset">reset</button></div></div>
+ <div class="bar"><i id="barGood" style="width:0"></i><i id="barBad" style="width:0"></i></div>
+ <div class="tabs" role="tablist" id="tabs"></div>
+</header>
+<main id="main"></main>
+</div>
+<script>
+const DATA = {"co": [{"code": "cafe.shape", "shown": "(7, 4)", "truth": "(7, 4)", "match": true, "why": "shape is (rows, columns). 7 rows and 4 columns, so (7, 4)."}, {"code": "cafe.groupby(\"store\")[\"cups\"].mean()", "shown": "store\nEast      8.0\nNorth     7.0\nSouth    10.0\nName: cups, dtype: float64", "truth": "store\nEast      8.0\nNorth     7.0\nSouth    10.0\nName: cups, dtype: float64", "match": true, "why": "mean() skips NaN. South has cups 8, 12 and one NaN, so its mean is (8+12)/2 = 10, not (8+0+12)/3."}, {"code": "cafe[cafe[\"price\"] >= 5]", "shown": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n1  North  Mocha    6.0   4.0\n2  South  Latte    5.0   8.0\n3  South  Mocha    6.0   NaN", "truth": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n1  North  Mocha    6.0   4.0\n2  South  Latte    5.0   8.0\n4  South  Mocha    6.0   NaN", "match": false, "why": "Filtering keeps the ORIGINAL index labels (0, 1, 2, 4). Only .reset_index(drop=True) renumbers. The NaN-price row fails the test, so it is dropped."}, {"code": "cafe.groupby(\"drink\").agg(total_cups=(\"cups\", \"sum\"), avg_price=(\"price\", \"mean\"))", "shown": "       total_cups  avg_price\ndrink                       \nLatte        27.0        5.0\nMocha         4.0        6.0\nTea          19.0        3.0", "truth": "       total_cups  avg_price\ndrink                       \nLatte        27.0        5.0\nMocha         4.0        6.0\nTea          19.0        3.0", "match": true, "why": "Named aggregation: new_name=(\"column\", \"function\"). Result has one row per group, sorted by group label. sum() skips NaN (Mocha: 4 + NaN = 4)."}, {"code": "cafe[\"store_avg\"] = cafe.groupby(\"store\")[\"price\"].transform(\"mean\")\ncafe[[\"store\", \"price\", \"store_avg\"]]", "shown": "   store  price  store_avg\n0  North    5.0   5.500000\n1  North    6.0   5.500000\n2  South    5.0   4.666667\n3  South    3.0   4.666667\n4  South    6.0   4.666667\n5   East    3.0   3.000000\n6   East    NaN   3.000000", "truth": "   store  price  store_avg\n0  North    5.0   5.500000\n1  North    6.0   5.500000\n2  South    5.0   4.666667\n3  South    3.0   4.666667\n4  South    6.0   4.666667\n5   East    3.0   3.000000\n6   East    NaN   3.000000", "match": true, "why": "transform() returns a result the SAME length as the original (7 rows), repeating each group mean on every row. agg() collapses to 3 rows."}, {"code": "cafe[\"price\"].fillna(cafe[\"price\"].mean())\ncafe[\"price\"].isna().sum()", "shown": "0", "truth": "1", "match": false, "why": "fillna() returns a NEW Series and does not change cafe unless you assign it back. The original column still has 1 NaN, so the answer is 1."}, {"code": "cafe.iloc[1:4, [0, 2]]", "shown": "   store  price\n1  North    6.0\n2  South    5.0\n3  South    3.0", "truth": "   store  price\n1  North    6.0\n2  South    5.0\n3  South    3.0", "match": true, "why": "iloc is positional and the stop is EXCLUSIVE: rows 1, 2, 3 (not 4). Columns [0, 2] are store and price."}, {"code": "cafe.value_counts()", "shown": "store  drink  price  cups\nEast   Tea    3.0    7.0     1\nNorth  Latte  5.0    10.0    1\n       Mocha  6.0    4.0     1\nSouth  Latte  5.0    8.0     1\n       Tea    3.0    12.0    1\nName: count, dtype: int64", "truth": "store  drink  price  cups\nEast   Tea    3.0    7.0     1\nNorth  Latte  5.0    10.0    1\n       Mocha  6.0    4.0     1\nSouth  Latte  5.0    8.0     1\n       Tea    3.0    12.0    1\nName: count, dtype: int64", "match": true, "why": "On a whole DataFrame, value_counts() counts unique rows AND drops any row that has a NaN by default. Only 5 of the 7 rows survive, each appearing once."}, {"code": "r = cafe.sort_values(\"cups\", inplace=True)\nprint(r)", "shown": "   store  drink  price  cups\n1  North  Mocha    6.0   4.0\n5   East    Tea    3.0   7.0\n2  South  Latte    5.0   8.0\n6   East  Latte    NaN   9.0\n0  North  Latte    5.0  10.0\n3  South    Tea    3.0  12.0\n4  South  Mocha    6.0   NaN", "truth": "None", "match": false, "why": "With inplace=True the method modifies cafe and returns None, so r is None and print(r) shows None."}, {"code": "cafe.groupby(\"store\")[[\"price\", \"cups\"]].agg([\"mean\", \"max\"])", "shown": "          price       cups      \n           mean  max  mean   max\nstore                           \nEast   3.000000  3.0   8.0   9.0\nNorth  5.500000  6.0   7.0  10.0\nSouth  4.666667  6.0  10.0  12.0", "truth": "          price       cups      \n           mean  max  mean   max\nstore                           \nEast   3.000000  3.0   8.0   9.0\nNorth  5.500000  6.0   7.0  10.0\nSouth  4.666667  6.0  10.0  12.0", "match": true, "why": "Passing a list of functions to agg() on two columns gives two-level (MultiIndex) column headers: price/mean, price/max, cups/mean, cups/max."}, {"code": "cafe[\"drink\"].str.contains(\"Latte|Tea\").astype(int).sum()", "shown": "7", "truth": "5", "match": false, "why": "\"Latte|Tea\" is a regex: Latte OR Tea. 3 Lattes + 2 Teas = 5. Mocha is not matched. astype(int) turns True/False into 1/0 and sum() counts the Trues."}, {"code": "cafe.groupby(\"store\")[\"cups\"].count()", "shown": "store\nEast     2\nNorth    2\nSouth    3\nName: cups, dtype: int64", "truth": "store\nEast     2\nNorth    2\nSouth    2\nName: cups, dtype: int64", "match": false, "why": "count() counts NON-missing values, so South is 2 (one cups is NaN). size() would count rows and give 3."}, {"code": "cafe.nunique()", "shown": "store    3\ndrink    3\nprice    3\ncups     6\ndtype: int64", "truth": "store    3\ndrink    3\nprice    3\ncups     6\ndtype: int64", "match": true, "why": "nunique() counts distinct non-missing values per column. cups has 7 rows but one NaN and all others different, so 6."}, {"code": "cafe.sort_values(\"price\", ascending=False).head(3)", "shown": "   store  drink  price  cups\n3  South    Tea    3.0  12.0\n5   East    Tea    3.0   7.0\n0  North  Latte    5.0  10.0", "truth": "   store  drink  price  cups\n1  North  Mocha    6.0   4.0\n4  South  Mocha    6.0   NaN\n0  North  Latte    5.0  10.0", "match": false, "why": "ascending=False puts the LARGEST first. The top three prices are 6, 6, 5. NaN is always placed last, regardless of direction."}], "oc": [{"output": "drink\nLatte    3\nMocha    2\nTea      2\nName: count, dtype: int64", "code": "cafe.value_counts(\"drink\")", "ref": "cafe[\"drink\"].value_counts()", "candOut": "drink\nLatte    3\nMocha    2\nTea      2\nName: count, dtype: int64", "match": true, "why": "Yes. Series.value_counts() and DataFrame.value_counts(\"col\") give the same counts, sorted the same way."}, {"output": "   store  price\n0  North    5.0\n1  North    6.0\n2  South    5.0\n3  South    3.0\n4  South    6.0\n5   East    3.0\n6   East    NaN", "code": "cafe[\"store\", \"price\"]", "ref": "cafe[[\"store\", \"price\"]]", "candOut": "KeyError: ('store', 'price')", "match": false, "why": "No. A comma inside single brackets is treated as ONE tuple key, which raises a KeyError. Multiple columns need a LIST: double brackets [[\"store\",\"price\"]]."}, {"output": "       total_cups  avg_price\ndrink                       \nLatte        27.0        5.0\nMocha         4.0        6.0\nTea          19.0        3.0", "code": "cafe.groupby(\"drink\")[[\"cups\", \"price\"]].agg([\"sum\", \"mean\"])", "ref": "cafe.groupby(\"drink\").agg(total_cups=(\"cups\", \"sum\"), avg_price=(\"price\", \"mean\"))", "candOut": "       cups      price     \n        sum mean   sum mean\ndrink                      \nLatte  27.0  9.0  10.0  5.0\nMocha   4.0  4.0  12.0  6.0\nTea    19.0  9.5   6.0  3.0", "match": false, "why": "No. A list of functions gives two-level headers (cups/sum, cups/mean, ...). Custom column names total_cups and avg_price need named tuples."}, {"output": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n1  North  Mocha    6.0   4.0\n2  South  Latte    5.0   8.0\n3  South  Mocha    6.0   NaN", "code": "cafe[cafe[\"price\"] >= 5]", "ref": "cafe[cafe[\"price\"] >= 5].reset_index(drop=True)", "candOut": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n1  North  Mocha    6.0   4.0\n2  South  Latte    5.0   8.0\n4  South  Mocha    6.0   NaN", "match": false, "why": "No. The output index runs 0,1,2,3. Without reset_index(drop=True) the index would be 0,1,2,4."}, {"output": "   store  price  store_avg\n0  North    5.0   5.500000\n1  North    6.0   5.500000\n2  South    5.0   4.666667\n3  South    3.0   4.666667\n4  South    6.0   4.666667\n5   East    3.0   3.000000\n6   East    NaN   3.000000", "code": "cafe[\"store_avg\"] = cafe.groupby(\"store\")[\"price\"].agg(\"mean\")\ncafe[[\"store\", \"price\", \"store_avg\"]]", "ref": "cafe[\"store_avg\"] = cafe.groupby(\"store\")[\"price\"].transform(\"mean\")\ncafe[[\"store\", \"price\", \"store_avg\"]]", "candOut": "   store  price  store_avg\n0  North    5.0        NaN\n1  North    6.0        NaN\n2  South    5.0        NaN\n3  South    3.0        NaN\n4  South    6.0        NaN\n5   East    3.0        NaN\n6   East    NaN        NaN", "match": false, "why": "No. agg() returns 3 rows indexed by store name. Assigning it aligns on the index, which does not match 0..6, so the new column is all NaN. transform() is what matches the original rows."}, {"output": "   store  drink\n3  South    Tea\n0  North  Latte", "code": "cafe.iloc[0:2, [0, 1]]", "ref": "cafe.sort_values(\"cups\", ascending=False).iloc[0:2, [0, 1]]", "candOut": "   store  drink\n0  North  Latte\n1  North  Mocha", "match": false, "why": "No. Without sorting first you just get the first two rows (index 0, 1), not the two highest-cups rows (index 3, 0)."}, {"output": "store    0\ndrink    0\nprice    1\ncups     1\ndtype: int64", "code": "cafe.isna().count()", "ref": "cafe.isna().sum()", "candOut": "store    7\ndrink    7\nprice    7\ncups     7\ndtype: int64", "match": false, "why": "No. isna() gives True/False; sum() counts the Trues (missing). count() counts all entries, so you would get 7 for every column."}, {"output": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n2  South  Latte    5.0   8.0\n6   East  Latte    NaN   9.0", "code": "cafe[cafe[\"drink\"] == \"Latte\"]", "ref": "cafe[~cafe[\"drink\"].isin([\"Tea\", \"Mocha\"])]", "candOut": "   store  drink  price  cups\n0  North  Latte    5.0  10.0\n2  South  Latte    5.0   8.0\n6   East  Latte    NaN   9.0", "match": true, "why": "Yes. Not in [Tea, Mocha] leaves only Latte here, and the original index labels are kept either way."}, {"output": "0    5.000000\n1    6.000000\n2    5.000000\n3    3.000000\n4    6.000000\n5    3.000000\n6    4.666667\nName: price, dtype: float64", "code": "cafe[\"price\"].fillna(cafe[\"price\"].median())", "ref": "cafe[\"price\"].fillna(cafe[\"price\"].mean())", "candOut": "0    5.0\n1    6.0\n2    5.0\n3    3.0\n4    6.0\n5    3.0\n6    5.0\nName: price, dtype: float64", "match": false, "why": "No. The filled value is 4.666667 (the mean). The median would fill in 5.0."}, {"output": "        sum  mean\nstore            \nEast   16.0   8.0\nNorth  14.0   7.0\nSouth  20.0  10.0", "code": "cafe.groupby(\"store\")[[\"cups\"]].agg([\"sum\", \"mean\"])", "ref": "cafe.groupby(\"store\")[\"cups\"].agg([\"sum\", \"mean\"])", "candOut": "       cups      \n        sum  mean\nstore            \nEast   16.0   8.0\nNorth  14.0   7.0\nSouth  20.0  10.0", "match": false, "why": "No. Single brackets select a Series and give flat headers (sum, mean). Double brackets select a DataFrame and add a second header level (cups on top)."}, {"output": "   store  drink  price  cups\n2  South  Latte    5.0   8.0\n4  South  Mocha    6.0   NaN", "code": "cafe[(cafe[\"store\"] == \"South\") and (cafe[\"price\"] > 3)]", "ref": "cafe[(cafe[\"store\"] == \"South\") & (cafe[\"price\"] > 3)]", "candOut": "ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().", "match": false, "why": "No. Python \"and\" does not work elementwise on Series and raises a ValueError. Use & (and | for or) with each condition in parentheses."}, {"output": "0     True\n1    False\n2     True\n3    False\n4    False\n5    False\n6     True\nName: drink, dtype: bool", "code": "cafe[\"drink\"].str.contains(\"t\", case=False)", "ref": "cafe[\"drink\"].str.contains(\"t\")", "candOut": "0     True\n1    False\n2     True\n3     True\n4    False\n5     True\n6     True\nName: drink, dtype: bool", "match": false, "why": "No. str.contains is case-sensitive by default: \"Tea\" has a capital T so it is False. With case=False it would be True."}, {"output": "store\nEast      8.0\nNorth     7.0\nSouth    10.0\nName: cups, dtype: float64", "code": "cafe.groupby(\"store\").mean(numeric_only=True)[\"cups\"]", "ref": "cafe.groupby(\"store\")[\"cups\"].mean()", "candOut": "store\nEast      8.0\nNorth     7.0\nSouth    10.0\nName: cups, dtype: float64", "match": true, "why": "Yes. Averaging all numeric columns and then picking cups gives the same Series (just computed the long way)."}, {"output": "   store  drink\n3  South    Tea\n0  North  Latte", "code": "cafe.sort_values(\"cups\", ascending=False).head(2)[[\"store\", \"drink\"]]", "ref": "cafe.sort_values(\"cups\", ascending=False).iloc[0:2, [0, 1]]", "candOut": "   store  drink\n3  South    Tea\n0  North  Latte", "match": true, "why": "Yes. Sort high-to-low, take the top 2 rows, then keep store and drink. Same rows, same index labels (3, 0), same columns."}, {"output": "0    False\n1     True\n2    False\n3     True\n4     True\n5     True\n6    False\nName: drink, dtype: bool", "code": "(cafe[\"drink\"] == \"Tea\") | (cafe[\"drink\"] == \"Mocha\")", "ref": "cafe[\"drink\"].isin([\"Tea\", \"Mocha\"])", "candOut": "0    False\n1     True\n2    False\n3     True\n4     True\n5     True\n6    False\nName: drink, dtype: bool", "match": true, "why": "Yes. isin() is shorthand for chaining == tests with | (or). Each test is in parentheses because | binds tighter than ==."}, {"output": "store    0\ndrink    0\nprice    1\ncups     1\ndtype: int64", "code": "cafe.isna().sum(axis=0)", "ref": "cafe.isna().sum()", "candOut": "store    0\ndrink    0\nprice    1\ncups     1\ndtype: int64", "match": true, "why": "Yes. axis=0 (down the rows, one total per column) is the default, so writing it changes nothing."}], "tf": [{"q": "<code>dodgers.sort_values(\"attend\")<\/code> on its own rearranges the <code>dodgers<\/code> DataFrame itself.", "ans": false, "why": "False. It returns a new sorted copy and leaves dodgers unchanged. You need to assign the result, or pass inplace=True (which returns None)."}, {"q": "After <code>df2 = df[df[\"x\"] &gt;= 10]<\/code>, the index of <code>df2<\/code> keeps the original row labels, so it can skip numbers.", "ans": true, "why": "True. That is why info() showed 'Index: 43 entries, 0 to 79' for 43 rows. Use .reset_index(drop=True) to renumber 0..42."}, {"q": "<code>df.isna().sum()<\/code> returns the number of missing values in each column.", "ans": true, "why": "True. isna() gives a True/False table, and sum() adds up the Trues (True = 1) column by column."}, {"q": "<code>df[\"price\"].fillna(df[\"price\"].mean())<\/code>, run by itself, permanently replaces the NaNs in <code>df<\/code>.", "ans": false, "why": "False. It only returns a filled copy. To keep it: df[\"price\"] = df[\"price\"].fillna(...)."}, {"q": "<code>.agg()<\/code> returns a result with the same number of rows as the original DataFrame.", "ans": false, "why": "False. agg() collapses each group to one row. transform() is the one that keeps the original length and index."}, {"q": "<code>dodgers.groupby(\"day_of_week\").mean(\"attend\")<\/code> returns the mean of ONLY the attend column.", "ans": false, "why": "False. The string \"attend\" lands in the numeric_only argument (truthy), so it means 'average every numeric column'. You get day, attend and temp. Use [\"attend\"].mean() to get one column."}, {"q": "<code>df.iloc[0:3]<\/code> returns rows 0, 1 and 2 (three rows).", "ans": true, "why": "True. iloc slicing is position-based and the stop (3) is excluded."}, {"q": "<code>dodgers[\"day_of_week\"].str.contains(\"saturday\")<\/code> matches the rows where day_of_week is \"Saturday\".", "ans": false, "why": "False. str.contains is case-sensitive by default, so lowercase 'saturday' matches nothing (0 True values). Use case=False or capitalise."}, {"q": "<code>plt.savefig('fig1.png')<\/code> raises an error or warning if fig1.png already exists.", "ans": false, "why": "False. It silently overwrites. This is the 'be very careful' note in the lecture."}, {"q": "<code>df[\"cups\"].astype(int)<\/code> works fine on a column that contains NaN.", "ans": false, "why": "False. NaN has no integer form, so pandas raises IntCastingNaNError. Fill or drop the missing values first. (This is also why a column with None loads as float64.)"}, {"q": "<code>df.nunique()<\/code> ignores missing values by default.", "ans": true, "why": "True. nunique(dropna=True) is the default. In cafe, cups has 6 distinct values even though the column has 7 rows."}, {"q": "In Python, <code>'Saturday'<\/code> and <code>\"Saturday\"<\/code> are different strings.", "ans": false, "why": "False. Single and double quotes are interchangeable for string literals. Only the characters inside matter."}, {"q": "<code>.isin([...])<\/code> is pandas' counterpart of R's <code>%in%<\/code>.", "ans": true, "why": "True. It returns a True/False Series the same length as the original. Put ~ in front to invert it."}, {"q": "To combine two conditions on a DataFrame you can write <code>df[(df.a &gt; 1) and (df.b &lt; 5)]<\/code>.", "ans": false, "why": "False. Use & for AND and | for OR, with each condition in parentheses. 'and' raises 'truth value of a Series is ambiguous'."}, {"q": "<code>df.value_counts()<\/code> with no arguments counts how many times each distinct ROW appears, and skips rows containing NaN.", "ans": true, "why": "True. The lecture notes 'good to find duplicates'. The NaN skipping (dropna=True) is the hidden catch: cafe.value_counts() showed 5 rows, not 7."}], "mc": [{"q": "Which line gives the mean attendance for each day of the week as a Series?", "opts": ["dodgers.groupby(\"day_of_week\").mean(\"attend\")", "dodgers.groupby(\"day_of_week\")[\"attend\"].mean()", "dodgers[\"attend\"].groupby().mean(\"day_of_week\")", "dodgers.mean(\"attend\").groupby(\"day_of_week\")"], "ans": 1, "why": "Group first, pick the column in square brackets, then aggregate. Option A runs but averages every numeric column."}, {"q": "You want only the rows where the opponent is 'Mets' or 'Reds'. Which works?", "opts": ["dodgers[dodgers[\"opponent\"] == [\"Mets\", \"Reds\"]]", "dodgers[dodgers[\"opponent\"].isin([\"Mets\", \"Reds\"])]", "dodgers[dodgers[\"opponent\"] in [\"Mets\", \"Reds\"]]", "dodgers[dodgers.isin(\"Mets\", \"Reds\")]"], "ans": 1, "why": "isin() takes ONE list and returns True/False per row. == with a list compares elementwise by length, and Python's 'in' is not vectorised."}, {"q": "Which code produces columns named <code>total_cups<\/code> and <code>avg_price<\/code>?", "opts": [".agg([\"sum\",\"mean\"])", ".agg(total_cups=\"cups\", avg_price=\"price\")", ".agg(total_cups=(\"cups\",\"sum\"), avg_price=(\"price\",\"mean\"))", ".agg({\"total_cups\",\"avg_price\"})"], "ans": 2, "why": "Named aggregation: new_name=(\"column\", \"function\"). The pair goes in a tuple."}, {"q": "You need a NEW column holding each store's average price on every row of <code>cafe<\/code> (7 rows, repeated values). Which method?", "opts": ["groupby(\"store\")[\"price\"].agg(\"mean\")", "groupby(\"store\")[\"price\"].transform(\"mean\")", "groupby(\"store\")[\"price\"].value_counts()", "groupby(\"store\")[\"price\"].sort_values()"], "ans": 1, "why": "transform() returns one value per original row, aligned to the original index. agg() would give 3 rows."}, {"q": "What does <code>cafe.iloc[2:5, [1, 3]]<\/code> return?", "opts": ["rows 2, 3, 4 and columns drink, cups", "rows 2, 3, 4, 5 and columns store, price", "rows 2, 3, 4 and columns store, price", "rows 3, 4, 5 and columns drink, cups"], "ans": 0, "why": "Positions, stop excluded: rows 2,3,4. Column positions 1 and 3 are drink and cups (store is 0). Real output:<pre>   drink  cups\n2  Latte   8.0\n3    Tea  12.0\n4  Mocha   NaN<\/pre>"}, {"q": "After filtering, how do you renumber the index 0, 1, 2, ... without keeping the old one as a column?", "opts": [".reset_index()", ".reset_index(drop=True)", ".reindex(drop=True)", ".sort_index(inplace=True)"], "ans": 1, "why": "drop=True throws the old index away. Plain .reset_index() would add it back as a new column called 'index'."}, {"q": "What is the value of <code>cafe.groupby(\"store\")[\"cups\"].agg([\"sum\", \"mean\"]).shape<\/code>?", "opts": ["(7, 2)", "(3, 2)", "(2, 3)", "(3, 1)"], "ans": 1, "why": "3 stores (East, North, South) = 3 rows; 2 statistics = 2 columns. groupby collapses rows."}, {"q": "Which expression counts how many drinks in <code>cafe<\/code> are Latte or Tea?", "opts": ["cafe[\"drink\"].str.contains(\"Latte|Tea\").sum()", "cafe[\"drink\"].str.contains(\"Latte\" or \"Tea\").sum()", "cafe[\"drink\"].contains(\"Latte|Tea\").sum()", "cafe[\"drink\"].str.contains(\"Latte&Tea\").sum()"], "ans": 0, "why": "It needs .str before contains, and \"Latte|Tea\" is a regex meaning OR. True counts as 1, so sum() counts matches (5). \"Latte\" or \"Tea\" evaluates to just \"Latte\"."}, {"q": "What does <code>cafe[cafe[\"price\"] &gt;= 5].shape<\/code> return?", "opts": ["(7, 4)", "(4, 4)", "(6, 4)", "(4, 7)"], "ans": 1, "why": "Prices >= 5 are 5, 6, 5, 6, so 4 rows; 4 columns. The NaN price compares as False and is dropped. Shape is (rows, columns)."}, {"q": "What does <code>cafe.dropna().shape<\/code> return? (cafe has one NaN in price and a different row with a NaN in cups.)", "opts": ["(7, 4)", "(6, 4)", "(5, 4)", "(5, 2)"], "ans": 2, "why": "dropna() removes every ROW that has any NaN. Two different rows have a NaN, so 7 - 2 = 5 rows remain and all 4 columns are kept."}, {"q": "Your histogram code is <code>sns.histplot(data=usedcars, x=\"price\")<\/code>. Which change makes each bar cover $2,000 of price?", "opts": ["bins=2000", "binwidth=2000", "width=2000", "step=2000"], "ans": 1, "why": "binwidth sets the width of each bar (the lecture used binwidth=5000 for attendance). bins would set the NUMBER of bars."}, {"q": "A DataFrame has columns month, attend, opponent, and <code>attend<\/code> is stored as text ('56,000'). The summary from <code>describe()<\/code> shows only count/unique/top/freq. What is the cause?", "opts": ["The data has missing values", "The numeric column was read as object (text), not a number type", "describe() only works after sorting", "The index was not reset"], "ans": 1, "why": "describe() summarizes numbers with mean/std/min/max. A column of dtype object is summarized as categorical. Check info() or dtypes, then fix with astype or cleaning the text."}]};
+const SECTIONS=[
+ {k:'co',name:'Code to Output',intro:'Each card shows code and an output. Decide whether that output is what the code really prints. If you say no, write what you think it should be before the answer is revealed. Every output here was produced by running the code in pandas 2.3.3. The cafe table is the one from the study guide, rebuilt fresh for each question.'},
+ {k:'oc',name:'Output to Code',intro:'Each card shows an output and a candidate line of code. Decide whether that code produces exactly that output. If you say no, write the fix first.'},
+ {k:'tf',name:'True / False',intro:'Click to answer. Feedback is immediate.'},
+ {k:'mc',name:'Multiple Choice',intro:'Click to answer. Option order is shuffled every time you load the page.'}];
+const CAFE=`cafe = pd.DataFrame({
+    "store": ["North","North","South","South","South","East","East"],
+    "drink": ["Latte","Mocha","Latte","Tea","Mocha","Tea","Latte"],
+    "price": [5, 6, 5, 3, 6, 3, None],
+    "cups":  [10, 4, 8, 12, None, 7, 9]
+})`;
+const state={}; // key -> true/false
+let cur=localStorage_get('tab')||'co';
+function localStorage_get(k){try{return localStorage.getItem('w5_'+k)}catch(e){return null}}
+function localStorage_set(k,v){try{localStorage.setItem('w5_'+k,v)}catch(e){}}
+const $=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const txt=(t,c,s)=>{const e=document.createElement(t);e.className=c||'';e.textContent=s;return e};
+const isErr=s=>/^[A-Za-z]*Error:/.test(s);
+function blockPre(label,text,cls){const b=$('div','blk');b.append($('div','lbl',label));const p=txt('pre',cls,text);b.append(p);return b}
+function outBlock(label,text){return blockPre(label,text||'(nothing printed)','out'+(isErr(text)?' err':''))}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function record(card,key,ok){state[key]=ok;card.classList.add(ok?'right':'wrong');update()}
+function update(){
+  const all=Object.keys(state).length,good=Object.values(state).filter(Boolean).length;
+  let tot=0;SECTIONS.forEach(s=>tot+=DATA[s.k].length);
+  sc.textContent=good;an.textContent=all;document.getElementById('tot').textContent=tot;
+  barGood.style.width=(good/tot*100)+'%';barBad.style.width=((all-good)/tot*100)+'%';
+  renderTabs(true);
+}
+function renderTabs(keep){
+  tabs.innerHTML='';
+  SECTIONS.forEach(s=>{
+    const n=DATA[s.k].length,d=Object.keys(state).filter(k=>k.startsWith(s.k+':')).length;
+    const b=$('button','tab',s.name+'<small>'+d+'/'+n+'</small>');
+    b.setAttribute('role','tab');b.setAttribute('aria-selected',s.k===cur);
+    b.onclick=()=>{cur=s.k;localStorage_set('tab',cur);render()};
+    tabs.append(b)});
+}
+function judgeCard(kind,i,q){
+  const key=kind+':'+i,card=$('section','card');
+  card.append($('div','qhead','<span>'+(kind==='co'?'Code to Output':'Output to Code')+'</span><span>'+(i+1)+' / '+DATA[kind].length+'</span>'));
+  if(kind==='co'){
+    card.append(blockPre('Code',(/cafe/.test(q.code)?'# cafe is defined as in the study guide (shown at the top of this tab)\n':'')+q.code,'code'));
+    card.append(outBlock('Output shown',q.shown));
+    card.append($('p','q','Is this what the code prints?'));
+  }else{
+    card.append(outBlock('Output shown',q.output));
+    card.append(blockPre('Candidate code',q.code,'code'));
+    card.append($('p','q','Does this code produce exactly that output?'));
+  }
+  const btns=$('div','btns'),yes=$('button','btn',kind==='co'?'Yes, it matches':'Yes, it produces it'),no=$('button','btn',kind==='co'?'No, it differs':'No, it does not');
+  btns.append(yes,no);card.append(btns);
+  const slot=$('div');card.append(slot);
+  function reveal(said,mine){
+    [yes,no].forEach(b=>b.disabled=true);
+    const ok=(said===q.match);(said?yes:no).classList.add(ok?'good':'bad');
+    const fb=$('div','fb '+(ok?'good':'bad'));
+    fb.append($('b','v',ok?'Correct':'Not quite'));
+    const verdict=kind==='co'?(q.match?'The output shown is the real output.':'The output shown is NOT the real output.'):(q.match?'Yes, that code gives this output.':'No, that code does not give this output.');
+    fb.append($('div','',verdict+' '+q.why));
+    if(mine&&mine.trim()){fb.append(txt('div','yours','Your answer: '+mine.trim()))}
+    if(kind==='co'){ if(!q.match) fb.append(outBlock('Real output',q.truth)) }
+    else{ fb.append(blockPre('Reference code that gives the output shown',q.ref,'code')); if(!q.match) fb.append(outBlock('What your candidate line actually does',q.candOut)) }
+    slot.innerHTML='';slot.append(fb);record(card,key,ok);
+  }
+  yes.onclick=()=>reveal(true);
+  no.onclick=()=>{
+    [yes,no].forEach(b=>b.disabled=true);no.classList.add('sel');
+    slot.innerHTML='';
+    const wrap=$('div','blk');
+    wrap.append($('div','lbl',kind==='co'?'What should the output be? (write it, then reveal)':'What would you change in the code? (write it, then reveal)'));
+    const ta=document.createElement('textarea');ta.id='ta-'+key.replace(':','-');wrap.append(ta);
+    const go=$('button','btn primary','Reveal answer');go.style.marginTop='8px';wrap.append(go);
+    slot.append(wrap);ta.focus();
+    go.onclick=()=>reveal(false,ta.value);
+  };
+  return card;
+}
+function tfCard(i,q){
+  const key='tf:'+i,card=$('section','card');
+  card.append($('div','qhead','<span>True / False</span><span>'+(i+1)+' / '+DATA.tf.length+'</span>'));
+  card.append($('p','q',q.q));
+  const btns=$('div','btns'),t=$('button','btn','True'),f=$('button','btn','False');btns.append(t,f);card.append(btns);
+  const slot=$('div');card.append(slot);
+  const go=v=>{[t,f].forEach(b=>b.disabled=true);const ok=v===q.ans;(v?t:f).classList.add(ok?'good':'bad');
+    const fb=$('div','fb '+(ok?'good':'bad'),'<b class="v">'+(ok?'Correct':'Not quite')+'</b>'+q.why);slot.append(fb);record(card,key,ok)};
+  t.onclick=()=>go(true);f.onclick=()=>go(false);return card}
+function mcCard(i,q){
+  const key='mc:'+i,card=$('section','card');
+  card.append($('div','qhead','<span>Multiple Choice</span><span>'+(i+1)+' / '+DATA.mc.length+'</span>'));
+  card.append($('p','q',q.q));
+  const opts=$('div','opts'),slot=$('div');
+  const order=shuffle(q.opts.map((o,idx)=>({o,idx})));
+  const letters='ABCD';
+  order.forEach((x,n)=>{const b=txt('button','btn opt',letters[n]+'.  '+x.o);
+    b.onclick=()=>{[...opts.children].forEach(c=>c.disabled=true);
+      const ok=x.idx===q.ans;b.classList.add(ok?'good':'bad');
+      if(!ok)[...opts.children].forEach((c,m)=>{if(order[m].idx===q.ans)c.classList.add('good')});
+      slot.append($('div','fb '+(ok?'good':'bad'),'<b class="v">'+(ok?'Correct':'Not quite')+'</b>'+q.why));record(card,key,ok)};
+    opts.append(b)});
+  card.append(opts,slot);return card}
+function render(){
+  renderTabs();main.innerHTML='';
+  const s=SECTIONS.find(x=>x.k===cur);
+  main.append($('p','intro',s.intro));
+  if(cur==='co'||cur==='oc'){const b=$('div','blk');b.append($('div','lbl','The cafe table (used in most cards)'));b.append(txt('pre','code',CAFE));main.append(b)}
+  DATA[cur].forEach((q,i)=>{main.append(cur==='tf'?tfCard(i,q):cur==='mc'?mcCard(i,q):judgeCard(cur,i,q))});
+  window.scrollTo(0,0);
+}
+document.getElementById('reset').onclick=()=>{for(const k in state)delete state[k];render();update()};
+render();update();
+</script>
